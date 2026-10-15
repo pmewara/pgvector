@@ -1,0 +1,38 @@
+name: Build pgvector Windows DLL
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install PostgreSQL 16
+        run: choco install postgresql16 --params '/Password:postgres' -y
+        shell: cmd
+
+      - name: Add PostgreSQL to PATH
+        run: echo "C:\Program Files\PostgreSQL\16\bin" >> $env:GITHUB_PATH
+        shell: powershell
+
+      - name: Setup MSVC
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x64
+
+      - name: Build vector.dll
+        run: |
+          set PGROOT=C:\Program Files\PostgreSQL\16
+          nmake /F Makefile.win
+        shell: cmd
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: pgvector-v0.8.7-pg16-windows-x64
+          path: vector.dll
+          retention-days: 30
